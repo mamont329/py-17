@@ -1,5 +1,6 @@
 import json
 import os
+import random
 
 
 class Animal:
@@ -63,11 +64,6 @@ class Reptile(Animal):
         return data
 
 
-def animal_sound(animals):
-    for animal in animals:
-        print(f"{animal.name}: {animal.make_sound()}")
-
-
 class ZooKeeper:
     def __init__(self, name):
         self.name = name
@@ -102,6 +98,12 @@ class Zoo:
         self.animals = []
         self.staff = []
         self.load_zoo()
+
+        # Добавляем обязательных сотрудников, если их нет
+        if not any(isinstance(s, ZooKeeper) for s in self.staff):
+            self.add_staff(ZooKeeper("Временный смотритель"))
+        if not any(isinstance(s, Veterinarian) for s in self.staff):
+            self.add_staff(Veterinarian("Временный ветеринар"))
 
     def add_animal(self, animal):
         self.animals.append(animal)
@@ -154,39 +156,95 @@ class Zoo:
         for staff in self.staff:
             print(f"{staff.__class__.__name__}: {staff.name}")
 
+
+def add_animal_menu(zoo):
+    print("\nДобавление животного:")
+    print("1. Птица")
+    print("2. Млекопитающее")
+    print("3. Рептилия")
+    choice = input("Выберите тип животного: ")
+
+    name = input("Имя животного: ")
+    age = int(input("Возраст животного: "))
+
+    if choice == "1":
+        wingspan = float(input("Размах крыльев: "))
+        zoo.add_animal(Bird(name, age, wingspan))
+    elif choice == "2":
+        fur_color = input("Цвет шерсти: ")
+        zoo.add_animal(Mammal(name, age, fur_color))
+    elif choice == "3":
+        scale_type = input("Тип чешуи: ")
+        zoo.add_animal(Reptile(name, age, scale_type))
+    else:
+        print("Неверный выбор")
+
+
+def add_staff_menu(zoo):
+    print("\nДобавление сотрудника:")
+    print("1. Смотритель")
+    print("2. Ветеринар")
+    choice = input("Выберите тип сотрудника: ")
+
+    name = input("Имя сотрудника: ")
+
+    if choice == "1":
+        zoo.add_staff(ZooKeeper(name))
+    elif choice == "2":
+        zoo.add_staff(Veterinarian(name))
+    else:
+        print("Неверный выбор")
+
+
+def animal_sounds(zoo):
+    print("\nЗвуки животных:")
+    for animal in zoo.animals:
+        print(f"{animal.name} ({animal.__class__.__name__}): {animal.make_sound()}")
+
+
+def random_care(zoo):
+    if not zoo.animals:
+        print("Нет животных для ухода")
+        return
+
+    animal = random.choice(zoo.animals)
+    keeper = next((s for s in zoo.staff if isinstance(s, ZooKeeper)), None)
+    vet = next((s for s in zoo.staff if isinstance(s, Veterinarian)), None)
+
+    action = random.randint(1, 2)
+    if action == 1 and keeper:
+        print(keeper.feed_animal(animal))
+    elif action == 2 and vet:
+        print(vet.heal_animal(animal))
+    else:
+        print("Нет доступных сотрудников для ухода")
+
+
+def main_menu(zoo):
+    while True:
+        print("\nМеню зоопарка:")
+        print("1. Добавить животное")
+        print("2. Добавить сотрудника")
+        print("3. Прослушать звуки животных")
+        print("4. Случайная кормёжка/уход")
+        print("5. Выйти")
+
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            add_animal_menu(zoo)
+        elif choice == "2":
+            add_staff_menu(zoo)
+        elif choice == "3":
+            animal_sounds(zoo)
+        elif choice == "4":
+            random_care(zoo)
+        elif choice == "5":
+            break
+        else:
+            print("Неверный выбор")
+
+
 if __name__ == "__main__":
     zoo = Zoo()
-
-    # Добавление животных
-    zoo.add_animal(Bird("Птичка", 2, 10))
-    zoo.add_animal(Mammal("Лёва", 5, "Golden"))
-    zoo.add_animal(Reptile("Шнырятель", 3, "Smooth"))
-
-    # Добавление сотрудников
-    zoo.add_staff(ZooKeeper("Иван"))
-    zoo.add_staff(Veterinarian("Доктор Петров"))
-
-    # Вывод информации
-    print("Животные в Зоопарке:")
-    zoo.list_animals()
-
-    print("\nСотрудники Зоопарка:")
-    zoo.list_staff()
-
-    print("\nВот, какие звуки издают животные в Зоопарке:")
-    animal_sound(zoo.animals)
-
-    # Ищем первого попавшегося смотрителя и ветеринара
-    keeper = next((staff for staff in zoo.staff if isinstance(staff, ZooKeeper)), None)
-    vet = next((staff for staff in zoo.staff if isinstance(staff, Veterinarian)), None)
-
-    # Демонстрация работы сотрудников с проверками
-    if keeper and zoo.animals:
-        print(f"\n{keeper.feed_animal(zoo.animals[0])}")
-    else:
-        print("\nНет доступного смотрителя или животных")
-
-    if vet and len(zoo.animals) > 1:
-        print(f"{vet.heal_animal(zoo.animals[1])}")
-    else:
-        print("Нет доступного ветеринара или недостаточно животных")
+    main_menu(zoo)
